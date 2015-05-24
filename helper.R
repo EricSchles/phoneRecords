@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+library(shiny)
+library(DT)
 library(tools)
 library(magrittr)
 library(dplyr)

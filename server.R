@@ -1,8 +1,6 @@
 #!/usr/bin/env Rscript
 options(shiny.maxRequestSize=3000*1024^2)
 
-library(shiny)
-library(DT)
 source('helper.R')
 
 shinyServer(function(input, output, session) {
