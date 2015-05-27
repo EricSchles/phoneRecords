@@ -4,6 +4,7 @@ colorsIDX <- sort(sample(1:length(colors())))
 shinyUI(pageWithSidebar(
   headerPanel("Phone Record Analyzer"),
 
+
   sidebarPanel(
     conditionalPanel(condition='input.myTabs == "Raw Data" && !output.fileUploaded',
                     h3('Upload Data'),
@@ -75,6 +76,7 @@ shinyUI(pageWithSidebar(
   ),
 
   mainPanel(
+    tags$head(tags$script(src="alert.js")),
     conditionalPanel(condition="!output.fileUploaded",
                      tags$style(type="text/css", "div #logo{text-align:center}"),
                      imageOutput('logo')),

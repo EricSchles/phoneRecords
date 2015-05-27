@@ -12,12 +12,17 @@ shinyServer(function(input, output, session) {
 
   rawData <- reactive({
     if (is.null(input$file)) return(NULL)
-    validate(need(input$file$type == "text/plain",
-                  message=paste("Currently, this app can only take TXT files.",
-                                "CSV functionality will be added later.",
-                                "Please reload the app and try again.", sep=" ")))
+    #validate(need(input$file$type == "text/plain",
+     #             message=paste("Currently, this app can only take TXT files.",
+      #                          "CSV functionality will be added later.",
+       #                         "Please reload the app and try again.", sep=" ")))
 
-    #if (file_ext(input$file$datapath) == 'txt') {
+    if (input$file$type != "text/plain") {
+      session$sendCustomMessage(type="showalert", "File type not supported")
+      return(NULL)
+    }
+
+    #if (input$file$type) == 'text/plain') {
       txt <- readLines(con=input$file$datapath) %>% gsub('^\\s*|\\s*$', '', .)
       pageStart <- grep("Run Date: ", txt, fixed=T)
       pageFinish <- c(pageStart[-1] - 1, length(txt))
@@ -26,7 +31,15 @@ shinyServer(function(input, output, session) {
       withProgress(message="Generating data", detail="Page 1", value=0, {
         for (i in 1:length(pageStart)) {
           textBlock <- txt[pageStart[i]:pageFinish[i]]
-          dat <- rbind(dat, parseTextBlock(textBlock, i))
+          if (input$complianceType == "AT&T - 2015") {
+            dat <- rbind(dat, parseAttTextBlock1(textBlock, i))
+          } else if (input$complianceType == "AT&T/Cingular - 2015") {
+            dat <- rbind(dat, parseAttTextBlock2(textBlock))
+          } else {
+            dat <- data.frame("Error"="The data could not be parsed",
+                              "Solution"="Email Bryan at brittenb@dany.nyc.gov or call at 212-335-4309",
+                              stringsAsFactors=F)
+          }
           incProgress(1/length(pageStart), detail=paste("Page", i))
         }
       })
