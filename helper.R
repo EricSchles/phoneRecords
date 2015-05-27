@@ -120,7 +120,7 @@ parseAttTextBlock2 <- function(textBlock) {
 
   #Get index of each call record so we can later parse out what we don't need
   #Check to see if call records are all in one block
-  if (grep("Item\\s+Conn(?=.*)", textBlock, perl=T) == callLogStart) {
+  if (grep("Item[,]?Conn(?=.*)", textBlock, perl=T) == callLogStart) {
     itemNumbers <- dates <- times <- durations <- directions <- numbersDialed <- flagNumbers <- NA
     flags <- "Error found. Some data missing."
   } else {
