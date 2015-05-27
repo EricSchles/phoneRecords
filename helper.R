@@ -22,7 +22,7 @@ aggTable <- function(data) {
   return(x3)
 }
 
-parseTextBlock <- function(textBlock, pageNumber) {
+parseAttTextBlock1 <- function(textBlock, pageNumber) {
   target <- grep("Voice Usage For: ", textBlock, value=T) %>%
     str_extract(., "\\([0-9]{3}\\)[0-9]{3}.[0-9]{4}") %>%
     gsub("\\(|\\)|-", "", .) %>%
@@ -105,6 +105,93 @@ parseTextBlock <- function(textBlock, pageNumber) {
 
   return(dataRows)
 }
+
+parseAttTextBlock2 <- function(textBlock) {
+  target <- grep("Voice Usage For: ", textBlock, value=T) %>%
+    str_extract(., "\\([0-9]{3}\\)[0-9]{3}.[0-9]{4}") %>%
+    gsub("\\(|\\)|-", "", .) %>%
+    paste("1", ., sep='')
+
+  #Block off call logs
+  callLogStart <- ifelse(any(grepl("^\\(UTC\\)$", textBlock)),
+                         grep("^\\(UTC\\)$", textBlock) + 1,
+                         grep("[0-9]+(?=,[0-9]{2}/[0-9]{2}/[0-9]{2})", textBlock, perl=T))
+  callLogFinish <- grep("AT&T\\s+Proprietary", textBlock) - 1
+
+  #Get index of each call record so we can later parse out what we don't need
+  #Check to see if call records are all in one block
+  if (grep("Item\\s+Conn(?=.*)", textBlock) == callLogStart) {
+    itemNumbers <- dates <- times <- durations <- directions <- numbersDialed <- flagNumbers <- NA
+    flags <- "Error found. Some data missing."
+  } else {
+    callRecordIDX <- grep("[0-9]+(?=,[0-9]{2}/[0-9]{2}/[0-9]{2})", textBlock, perl=T)
+
+    #Initialize variables
+    itemNumbers <- dates <- times <- durations <- directions <- numbersDialed <- flags <- flagNumbers <- NULL
+
+    for (i in 1:length(callRecordIDX)) {
+      idx <- callRecordIDX[i]
+      crd <- strsplit(textBlock[idx], ",")[[1]]
+      itemNumber <- crd[1]
+      date <- strsplit(crd[2], " ")[[1]][1]
+      time <- strsplit(crd[2], " ")[[1]][2]
+      duration <- crd[6]
+      originating <- crd[4]
+      terminating <- crd[5]
+      direction <- ifelse(originating == target, "Outgoing", "Incoming")
+      numberDialed <- ifelse(originating == target, terminating, originating)
+
+      #Check for additional numbers listed below that may be flagged with codes
+      if (i != length(callRecordIDX)) {
+        if ((callRecordIDX[i + 1] - callRecordIDX[i]) > 1) {
+          callRecordStart <- callRecordIDX[i] + 1
+          callRecordFinish <- callRecordIDX[i + 1] - 1
+        }
+      } else {
+        if ((grep("AT&T\\s+Proprietary", textBlock) - callRecordIDX[i]) > 1) {
+          callRecordStart <- callRecordIDX[i] + 1
+          callRecordFinish <- grep("AT&T\\s+Proprietary", textBlock) - 1
+        }
+      }
+
+      if (exists("callRecordStart")) {
+        line <- textBlock[callRecordStart:callRecordFinish] %>% paste(collapse=' ')
+        if (grepl("[0-9]{7,}\\(F\\)", line)) {
+          flag <- "F"
+          flagNumber <- str_extract(line, "[0-9]{7,}")
+        } else if (grepl("[0-9]{7,}\\(D\\)", line)) {
+          flag <- "D"
+          flagNumber <- str_extract(line, "[0-9]{7,}")
+        } else if (grepl("[0-9]{7,}\\(OO\\)", line)) {
+          flag <- "OO"
+          flagNumber <- str_extract(line, "[0-9]{7,}")
+        } else {
+          flag <- ""
+          flagNumber <- NA
+        }
+      } else {
+        flag <- ""
+        flagNumber <- NA
+      }
+      itemNumbers <- c(itemNumbers, itemNumber)
+      dates <- c(dates, date)
+      times <- c(times, time)
+      durations <- c(durations, duration)
+      directions <- c(directions, direction)
+      numbersDialed <- c(numbersDialed, numberDialed)
+      flags <- c(flags, flag)
+      flagNumbers <- c(flagNumbers, flagNumber)
+    }
+  }
+  dataRows <- data.frame("Target"=target, "Item_Number"=itemNumbers, "Date"=dates, "Time"=times,
+                         "Duration"=durations, "Direction"=directions,
+                         "Number_Dialed"=numbersDialed, "Flag"=flags, "Flagged_Number"=flagNumbers,
+                         stringsAsFactors=F)
+
+  return(dataRows)
+}
+
+
 
 plotGraph <- function(data, target, month, year) {
   monNames <- c('January', 'February', 'March', 'April', 'May', 'June',
