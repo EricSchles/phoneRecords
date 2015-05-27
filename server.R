@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 options(shiny.maxRequestSize=3000*1024^2)
-set.seed(3457)
-colorsIDX <- sample(1:length(colors())) %>% sort()
+colorsIDX <- sort(sample(1:length(colors())))
 
 source('helper.R')
 

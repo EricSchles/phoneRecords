@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
-set.seed(3457)
-colorsIDX <- sample(1:length(colors())) %>% sort()
+colorsIDX <- sort(sample(1:length(colors())))
 
 shinyUI(pageWithSidebar(
   headerPanel("Phone Record Analyzer"),
