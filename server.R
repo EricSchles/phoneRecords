@@ -52,9 +52,9 @@ shinyServer(function(input, output, session) {
     generateNetwork(rawDataDF(), input$degree)
   })
 
-  ########################
-  #Create Condition Vars#
-  ########################
+  #########################
+   #Create Condition Vars#
+  #########################
 
   output$fileUploaded <- reactive({
     return(!is.null(rawData()))
@@ -66,7 +66,6 @@ shinyServer(function(input, output, session) {
     n <- rawData()$Target %>% unique() %>% length()
     return(n > 1)
   })
-  outputOptions(output, 'showNetwork', suspendWhenHidden=FALSE)
 
   ########################
       #Create Outputs#
@@ -84,10 +83,6 @@ shinyServer(function(input, output, session) {
   output$freq <- DT::renderDataTable({
     if (is.null(rawData())) return(NULL)
     freqData() %>% datatable()
-  })
-
-  output$common <- DT::renderDataTable({
-    networkData() %>% datatable()
   })
 
   output$network <- renderPlot({
@@ -126,7 +121,9 @@ shinyServer(function(input, output, session) {
     list(
       fileInput('file', 'Choose a file', multiple=F,
                 accept=c('text/csv', 'text/comma-separated-values',
-                         'text/plain', '.csv', '.txt'))
+                         'text/plain', '.csv', '.txt')),
+      h6("The data can take a while to load and display, depending on size, so please be patient.",
+         style="color:red; font-weight:bold")
     )
   })
 
@@ -140,6 +137,13 @@ shinyServer(function(input, output, session) {
       sliderInput('offsetValue', 'Offset:',
                   min=0, max=1, value=0, step=.1, round=F, ticks=F)
     )
+  })
+
+  output$common <- renderUI({
+    n <- rawData()$Target %>% unique() %>% length()
+    if (n <= 1) return()
+    list(
+      checkboxInput('common', 'Show only numbers dialed by two targets or more', value=F))
   })
 
   observe({

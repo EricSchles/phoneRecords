@@ -37,6 +37,7 @@ shinyUI(pageWithSidebar(
                               John Doe may have received a call (Incoming) from 555-5555 16 times and
                               called (Outgoing) that same number 23 times. You can use the search
                               boxes to look for specific targets or phone numbers.'),
+                     uiOutput('common'),
                      downloadButton('exportFreq', 'Export')),
 
     conditionalPanel(condition='input.myTabs == "Common Call Data" && output.fileUploaded',

@@ -72,7 +72,7 @@ parseTextBlock <- function(textBlock, pageNumber) {
       if (exists("callRecordStart")) {
         line <- textBlock[callRecordStart:callRecordFinish] %>% paste(collapse=' ')
         if (grepl("[0-9]{7,}\\(F\\)", line)) {
-          flag <- "Delete"
+          flag <- "F"
           flagNumber <- str_extract(line, "[0-9]{7,}")
         } else if (grepl("[0-9]{7,}\\(D\\)", line)) {
           flag <- "D"
@@ -81,11 +81,11 @@ parseTextBlock <- function(textBlock, pageNumber) {
           flag <- "OO"
           flagNumber <- str_extract(line, "[0-9]{7,}")
         } else {
-          flag <- "Keep"
+          flag <- ""
           flagNumber <- NA
         }
       } else {
-        flag <- "Keep"
+        flag <- ""
         flagNumber <- NA
       }
       itemNumbers <- c(itemNumbers, itemNumber)
