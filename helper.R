@@ -31,12 +31,12 @@ parseTextBlock <- function(textBlock, pageNumber) {
   #Block off call logs
   callLogStart <- ifelse(any(grepl("^\\(UTC\\)$", textBlock)),
                          grep("^\\(UTC\\)$", textBlock) + 1,
-                         grep("[0-9]+(?=[\\s,]+[0-9]{2}/[0-9]{2}/[0-9]{2})", textBlock, perl=T))
+                         grep("[0-9]+(?=\\s+[0-9]{2}/[0-9]{2}/[0-9]{2})", textBlock, perl=T))
   callLogFinish <- grep("AT&T\\s+Proprietary", textBlock) - 1
 
   #Get index of each call record so we can later parse out what we don't need
   #Check to see if call records are all in one block
-  if (grep("Item[\\]s+[,]?Conn(?=.*)", textBlock, perl=T) == callLogStart) {
+  if (grep("Item\\s+Conn", textBlock) == callLogStart) {
     itemNumbers <- dates <- times <- durations <- directions <- numbersDialed <- flagNumbers <- NA
     flags <- paste("Error found on page", pageNumber, sep=' ')
   } else {
