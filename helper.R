@@ -8,8 +8,7 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 library(scales)
-library(ggthemes)
-library(networkD3)
+library(igraph)
 
 aggTable <- function(data) {
   x1 <- data %>% filter(Direction == 'Outgoing') %>%
@@ -21,13 +20,6 @@ aggTable <- function(data) {
   names(x2) <- c('Target', 'Number', 'Incoming')
   x3 <- full_join(x1, x2)
   return(x3)
-}
-
-genList <- function(data) {
-  numbers <- data$Number %>% unique()
-  names(numbers) <- paste('Phone Number:', unique(data$Number), sep=' ')
-  d2 <- lapply(numbers, function(z) return(data %>% filter(Number == z) %>% select(Target, Outgoing, Incoming)))
-  return(d2)
 }
 
 parseTextBlock <- function(textBlock, pageNumber) {
@@ -55,7 +47,7 @@ parseTextBlock <- function(textBlock, pageNumber) {
 
     for (i in 1:length(callRecordIDX)) {
       idx <- callRecordIDX[i]
-      itemNumber <- str_extract(textBlock[idx], perl("[0-9]+(?=\\s+[0-9]{2}/[0-9]{2}/[0-9]{2})"))
+      itemNumber <- str_extract(textBlock[idx], "[0-9]+(?=\\s+[0-9]{2}/[0-9]{2}/[0-9]{2})")
       date <- str_extract(textBlock[idx], "[0-9]{2}/[0-9]{2}/[0-9]{2}")
       duration <- str_extract_all(textBlock[idx], "[0-9]{1,2}:[0-9]{2}")[[1]][3]
       time <- str_extract_all(textBlock[idx], "[0-9]{1,2}:[0-9]{2}")[[1]][1]
@@ -118,7 +110,7 @@ plotGraph <- function(data, target, month, year) {
   monNames <- c('January', 'February', 'March', 'April', 'May', 'June',
                  'July', 'August', 'September', 'October', 'November', 'December')
   monDigits <- c('01', '02', '03', '04', '05', '06', '07', '08', '09', 10:12)
-  endDays <- c(31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+  endDays <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 
   idx <- which(monNames == month)
 
@@ -160,11 +152,14 @@ formatNumber <- function(number) {
   return(newNumber)
 }
 
-
-generateNetwork <- function(data) {
-  networkData <- data %>% select(Target, Number_Dialed) %>% arrange(Target)
-  names(networkData) <- c('Source', 'Target')
-  return(networkData)
+generateNetwork <- function(data, degree) {
+  filteredData <- data %>% filter(!is.na(Number_Dialed))
+  networkData <- filteredData %>% group_by(Target, Number_Dialed) %>% summarise(Count=n())
+  counts <- sapply(networkData$Number_Dialed,
+                   function(z) length(networkData$Target[networkData$Number_Dialed == z]))
+  numbersOfInterest <- names(counts[counts >= degree])
+  filteredNetworkData <- networkData %>% filter(Number_Dialed %in% numbersOfInterest)
+  return(filteredNetworkData)
 }
 
 

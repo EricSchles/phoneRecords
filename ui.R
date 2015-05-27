@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+set.seed(3457)
+colorsIDX <- sample(1:length(colors())) %>% sort()
 
 shinyUI(pageWithSidebar(
   headerPanel("Phone Record Analyzer"),
@@ -10,9 +12,9 @@ shinyUI(pageWithSidebar(
                         uploaded at a time. The file can either be a TXT file that will be parsed into a data table,
                         or a CSV file that has already been parsed and cleaned up."),
                     h6("If you have any issues with this tool, please contact Bryan at brittenb@dany.nyc.gov or 212-335-4309"),
-                    fileInput('file', 'Choose a file', multiple=F,
-                              accept=c('text/csv', 'text/comma-separated-values',
-                                       'text/plain', '.csv', '.txt')),
+                    selectInput('complianceType', 'What type of file are you uploading?',
+                                choices=c("Select...", "AT&T - 2015")),
+                    uiOutput('fileShow'),
                     tags$hr()),
 
     conditionalPanel(condition='!(input.myTabs == "Raw Data") && !output.fileUploaded',
@@ -37,7 +39,7 @@ shinyUI(pageWithSidebar(
                               boxes to look for specific targets or phone numbers.'),
                      downloadButton('exportFreq', 'Export')),
 
-    conditionalPanel(condition='input.myTabs == "Common Call Report" && output.fileUploaded',
+    conditionalPanel(condition='input.myTabs == "Common Call Data" && output.fileUploaded',
                      h3('Common Call Report'),
                      h5('This report shows the common phone calls made between individuals.
                               For example, the report may show that John Doe and Jane Smith both
@@ -50,25 +52,43 @@ shinyUI(pageWithSidebar(
                      selectInput("year", "Year", choices=''),
                      selectInput("month", "Month", choices=c("Select...", "January", "February", "March", "April", "May",
                                                              "June", "July", "August", "September", "October", "November", "December"))),
-                     #submitButton()),
 
-    conditionalPanel(condition='input.myTabs == "Call Network" && output.fileUploaded',
+    conditionalPanel(condition='input.myTabs == "Common Call Network" && output.fileUploaded && !output.showNetwork',
                      h3('Call Network Analysis'),
-                     h5('This analysis shows a graphical representation of the Common Call Report.
-                              Lines represent phone calls made to an individual and are based on outgoing
-                              calls only. For example, if John Doe and Jane Smith are connected by a straight
-                              line, it means that John Doe called Jane Smith with the width of the line
-                              graphically representing how many times.'))
+                     h6(paste("The Common Call output is only worthwhile if you have more than one target.",
+                              "With one target, the graph merely shows everyone the target called, which",
+                              "is better represented in tabular format. You'll want to check the Call Frequency",
+                              "tab to get a better sense of the call patterns.", sep=" "))),
+
+    conditionalPanel(condition='input.myTabs == "Common Call Network" && output.fileUploaded && output.showNetwork',
+                     h3('Call Network Analysis'),
+                     sliderInput('degree', "Number of targets associated with a given number:",
+                                 min=2, max=5, value=2, step=1, round=T, ticks=F),
+                     sliderInput('nodeSize', 'Node Size:',
+                                 min=1, max=50, value=20, step=1, round=F, ticks=F),
+                     selectInput('nodeColor', 'Node Color:',
+                                 choices=colors()[colorsIDX], selected="lightblue"),
+                     checkboxInput('showLabel', 'Show Labels', value=TRUE),
+                     uiOutput('labelShow'),
+                     uiOutput('offsetShow'),
+                     downloadButton('exportGraph', 'Export Graph'))
   ),
 
   mainPanel(
-    tabsetPanel(type='tabs', id='myTabs',
-                tabPanel('Raw Data', dataTableOutput('raw')),
-                tabPanel('Call Frequency', dataTableOutput('freq')),
-                tabPanel('Common Call Report', verbatimTextOutput('common')),
-                tabPanel('Call Record Graphs', plotOutput('plot')),
-                tabPanel('Call Network', simpleNetworkOutput('network'))
-    )
+    conditionalPanel(condition="!output.fileUploaded",
+                     tags$style(type="text/css", "div #logo{text-align:center}"),
+                     imageOutput('logo')),
+
+    conditionalPanel(condition="output.fileUploaded",
+                     tabsetPanel(type='tabs', id='myTabs',
+                                 tabPanel('Raw Data', DT::dataTableOutput('raw')),
+                                 tabPanel('Call Frequency', DT::dataTableOutput('freq')),
+                                 tabPanel('Common Call Network',
+                                          conditionalPanel(condition="!output.showNetwork",
+                                                           imageOutput('noShow')),
+                                          conditionalPanel(condition="output.showNetwork",
+                                                           plotOutput('network'))),
+                                 tabPanel('Call Record Graphs', plotOutput('plot'))))
   )
 ))
 
