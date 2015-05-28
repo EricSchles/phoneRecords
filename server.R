@@ -52,7 +52,8 @@ shinyServer(function(input, output, session) {
     }
       dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
       dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
-      as.list(dat)
+      #removing Item_Number" from the dataframe for readability and usage reasons
+      as.list(dat[, -2])
   })
 
   rawDataDF <- reactive({
