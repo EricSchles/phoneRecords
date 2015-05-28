@@ -85,7 +85,7 @@ shinyUI(pageWithSidebar(
                      br(),
                      br(),
                      p('To download a graph for each month in each year for the current target, press this button:'),
-                     actionButton('exportMultiple', 'Export Multiple Graphs', icon("download")))
+                     downloadButton('exportMultiple', 'Export Multiple Graphs'))
 
   ),
 

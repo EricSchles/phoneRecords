@@ -241,40 +241,39 @@ shinyServer(function(input, output, session) {
       dev.off()
     })
 
-  observeEvent(input$exportMultiple, {
-    if (input$exportMultiple == 0) return()
-    if (input$target == 'Select...') {
-      session$sendCustomMessage(type="showalert", "Need to choose a target first.")
-      return(NULL)
-    }
-
-    #dir.create(path.expand('~/Documents/shinyTemp/'), showWarnings=F)
-    target <- input$target
-    dates <- rawData()$Date[rawData()$Target == target]
-    years <- dates %>% as.Date(format="%m/%d/%y") %>% format("%Y") %>% unique()
-    withProgress(message="Generating Plots", detail=NULL, value=0, {
-      for (year in years) {
-        months <- dates[paste0("20", substr(dates, 7, 8)) == year] %>%
-          as.Date(format="%m/%d/%y") %>% sort %>% format("%B") %>% unique()
-        withProgress(message="", detail=NULL, value=0, {
-          for (month in months) {
-            #fileName <- paste0(path.expand('~/Documents/shinyTemp/'), target, ' ', month, ' ', year, '.pdf')
-            fileName <- paste0(target, ' ', month, ' ', year, '.pdf')
-            pdf(fileName, height=8.5, width=11, paper="a4r")
-            chartInput()
-            dev.off()
-            incProgress(amount=1/length(months), detail=month)
-          }
-        })
-        incProgress(amount=1/length(years), detail=year)
+  output$exportMultiple <- downloadHandler(
+    filename = "pdfs.zip",
+    content = function(file) {
+      if (input$target == 'Select...') {
+        session$sendCustomMessage(type="showalert", "Need to choose a target first.")
+        return(NULL)
       }
-    })
-    #zip(path.expand('~/Documents/Phone Call Plots.zip'), dir(path.expand('~/Documents/shinyTemp/')))
-    zip('Phone Call Plots.zip', dir())
-    #unlink('~/Documents/shinyTemp/', recursive=T)
-    #session$sendCustomMessage(type="showalert", paste("The files have been saved here:",
-     #                                                 path.expand('~/Documents/Phone Call Plots.zip'),
-      #                                                sep=' '))
-  })
+      setwd(tempdir())
+      fileNames <- c()
+      target <- input$target
+      dates <- rawData()$Date[rawData()$Target == target]
+      years <- dates %>% as.Date(format="%m/%d/%y") %>% format("%Y") %>% unique()
+      withProgress(message="Generating Plots", detail=NULL, value=0, {
+        for (year in years) {
+          months <- dates[paste0("20", substr(dates, 7, 8)) == year] %>%
+            as.Date(format="%m/%d/%y") %>% sort %>% format("%B") %>% unique()
+          withProgress(message="", detail=NULL, value=0, {
+            for (month in months) {
+              fileName <- paste0(target, ' ', month, ' ', year, '.pdf')
+              fileNames <- c(fileNames, fileName)
+              pdf(fileName, height=8.5, width=11, paper="a4r")
+              chartInput()
+              dev.off()
+              incProgress(amount=1/length(months), detail=month)
+            }
+          })
+          incProgress(amount=1/length(years), detail=year)
+        }
+      })
+      zip(zipfile="pdfs.zip", files=fileNames)
+      if (file.exists(paste0(file, '.zip'))) file.rename(paste0(file, '.zip'), file)
+    },
+    contentType = "application/zip"
+  )
 })
 
