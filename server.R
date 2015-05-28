@@ -67,7 +67,9 @@ shinyServer(function(input, output, session) {
 
   networkData <- reactive({
     deg <- input$degree
-    generateNetwork(rawDataDF(), input$degree)
+    networkData <- generateNetwork(rawDataDF(), input$degree)
+    validate(need(!is.null(networkData), "There are no numbers with that many targets in common."))
+    networkData
   })
 
   #########################
@@ -102,8 +104,6 @@ shinyServer(function(input, output, session) {
     if (is.null(rawData())) return(NULL)
     g <- graph.data.frame(networkData(), directed=FALSE)
     l1 <- layout.fruchterman.reingold(g)
-    badVertices <- V(g)[degree(g)<input$degree]
-    g <- delete.vertices(g, badVertices)
     V(g)$size <- input$nodeSize
     V(g)$color <- input$nodeColor
     V(g)$label.cex <- input$labelSize

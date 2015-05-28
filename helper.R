@@ -258,7 +258,7 @@ generateNetwork <- function(data, degree) {
                    function(z) length(networkData$Target[networkData$Number_Dialed == z]))
   numbersOfInterest <- names(counts[counts >= degree])
   filteredNetworkData <- networkData %>% filter(Number_Dialed %in% numbersOfInterest)
-  return(filteredNetworkData)
+  if (nrow(filteredNetworkData) == 0) return(NULL) else return(filteredNetworkData)
 }
 
 
