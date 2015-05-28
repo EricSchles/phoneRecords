@@ -202,17 +202,17 @@ shinyServer(function(input, output, session) {
   ##########################
 
   output$exportData <- downloadHandler(
-    filename = paste0('C:\\Phone Record Data ', Sys.Date(), '.csv'),
+    filename = paste0('Phone Record Data ', Sys.Date(), '.csv'),
     content = function(file) {write.csv(rawData(), file, row.names=F)}
   )
 
   output$exportFreq <- downloadHandler(
-    filename = paste0('C:\\Call Frequency Report ', Sys.Date(), '.csv'),
+    filename = paste0('Call Frequency Report ', Sys.Date(), '.csv'),
     content = function(file) {write.csv(freqData(), file, row.names=F)}
   )
 
   output$exportGraph <- downloadHandler(
-    filename = paste0('C:\\Network Graph ', Sys.Date(), '.pdf'),
+    filename = paste0('Network Graph ', Sys.Date(), '.pdf'),
     content = function(file) {
       pdf(file, height=8.5, width=11, paper="a4r")
       graphInput()
@@ -220,7 +220,8 @@ shinyServer(function(input, output, session) {
     })
 
   output$exportSingle <- downloadHandler(
-    filename = paste0('C:\\', input$target, ' ', input$month, ' ', input$year, '.pdf'),
+    #function() is necessary in order to access the input variables
+    filename = function() {paste0(input$target, ' ', input$month, ' ', input$year, '.pdf')},
     content = function(file) {
       pdf(file, height=8.5, width=11, paper="a4r")
       chartInput()
@@ -235,7 +236,7 @@ shinyServer(function(input, output, session) {
     months <- dates %>% as.Date(format="%m/%d/%y") %>% sort %>% format("%B") %>% unique()
     for (year in years) {
       for (month in months) {
-        fileName <- paste0('C:\\', target, ' ', month, ' ', year, '.pdf')
+        fileName <- paste0(target, ' ', month, ' ', year, '.pdf')
         pdf(fileName, height=8.5, width=11, paper="a4r")
         chartInput()
         dev.off()
