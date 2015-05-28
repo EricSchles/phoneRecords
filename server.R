@@ -194,11 +194,10 @@ shinyServer(function(input, output, session) {
   })
 
   observe({
-    dates <- rawData()$Date %>% as.Date(format="%m/%d/%y")
-    startDate <- paste0(input$year, "01-01") %>% as.Date()
-    endDate <- paste0(input$year, "12-01") %>% as.Date()
-    dates <- dates[between(dates, startDate, endDate)] %>% unique() %>% sort()
-    months <- format(dates, "%B")
+    if (is.null(rawData())) return()
+    dates <- rawData()$Date
+    dates <- dates[paste0("20", substr(dates, 7, 8)) == input$year]
+    months <- dates %>% unique() %>% as.Date(format="%m/%d/%y") %>% sort() %>% format("%B")
     updateSelectInput(session, 'month', choices=c('Select...', months))
   })
 
