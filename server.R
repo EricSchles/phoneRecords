@@ -39,10 +39,10 @@ shinyServer(function(input, output, session) {
       })
     } else {
       dat <- read.csv(input$file$datapath, stringsAsFactors=F)
-      if (!(all(c("Target", "Date", "Originating", "Terminating") %in% names(dat)))) {
+      if (!(all(c("target", "date", "terminating") %in% tolower(names(dat))))) {
         session$sendCustomMessage(type="showalert", paste("The CSV file is not formatted properly.",
-                                                          "At the very least you must have the",
-                                                          "Target, Date, Originating, and Terminating",
+                                                          "At the very least you must have",
+                                                          "Target, Date, and Terminating",
                                                           "names in your spreadsheet. Please review",
                                                           "the documentation for further information.",
                                                           sep=" "))
@@ -101,11 +101,9 @@ shinyServer(function(input, output, session) {
   graphInput <- function() {
     if (is.null(rawData())) return(NULL)
     g <- graph.data.frame(networkData(), directed=FALSE)
-    l1 <- layout.fruchterman.reingold(g)
-    session$sendCustomMessage(type="showalert", message=V(g)$names)
-    session$sendCustomMessage(type="showalert", message=V(g)$Target %>% head())
+    l1 <- layout.fruchterman.reingold(g, niter=1000, area=vcount(g)^2.3, repuserad=vcount(g)^2.8)
     V(g)$size <- input$nodeSize
-    V(g)$color <- ifelse(V(g)$name %in% V(g)$Target, input$targetColor, input$otherColor)
+    V(g)$color <- ifelse(V(g)$name %in% rawData()$Target, input$targetColor, input$otherColor)
     V(g)$label.cex <- input$labelSize
     V(g)$label.color <- input$labelColor
     V(g)$label.dist <- input$offsetValue

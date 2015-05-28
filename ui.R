@@ -12,6 +12,8 @@ shinyUI(pageWithSidebar(
                         uploaded at a time. The file can either be a TXT file that will be parsed into a data table,
                         or a CSV file that has already been parsed and cleaned up."),
                     h6("If you have any issues with this tool, please contact Bryan at brittenb@dany.nyc.gov or 212-335-4309"),
+                    br(),
+                    br(),
                     selectInput('complianceType', 'What type of file are you uploading?',
                                 choices=c("Select...", "AT&T Text File (2015)", "Raw CSV File")),
                     selectInput("method", "How was the file created?",

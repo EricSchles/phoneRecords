@@ -191,6 +191,17 @@ parseAttTextBlock2 <- function(textBlock) {
   return(dataRows)
 }
 
+prepCSV <- function(data) {
+  names(dat) <- names(dat) %>% tolower()
+  vars <- names(dat)
+  if ("date" %in% vars & !("time" %in% vars)) {
+
+  if ("originating" %in% vars) {
+    direction <- ifelse(dat$originating == dat$target, "Outgoing", "Incoming")
+    if (!("number_dialed" %in% vars)){
+      numberDialed <- ifelse(originating == target, terminating, originating)
+    }
+
 
 
 plotGraph <- function(data, target, month, year) {
