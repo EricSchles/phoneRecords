@@ -234,8 +234,20 @@ plotGraph <- function(data, target, month, year) {
 }
 
 formatNumber <- function(number) {
-  if (nchar(number) == 11) tmp <- substr(number, 2, 11) else tmp <- number
-  newNumber <- paste("(", substr(tmp, 1, 3), ") ", substr(tmp, 4, 6), "-", substr(tmp, 7, 10), sep='')
+  if (nchar(number) >= 7) {
+    if (nchar(number) == 11) {
+      tmp <- substr(number, 2, 11)
+    } else if (nchar(number) == 10) {
+      tmp <- substr(number, 1, 10)
+    } else if (nchar(number) == 7) {
+      tmp <- substr(number, 1, 7)
+    } else {
+      tmp <- number
+    }
+    newNumber <- paste("(", substr(tmp, 1, 3), ") ", substr(tmp, 4, 6), "-", substr(tmp, 7, 10), sep='')
+  } else {
+    newNumber <- number
+  }
   return(newNumber)
 }
 

@@ -87,6 +87,8 @@ shinyUI(pageWithSidebar(
                                  tabPanel('Call Frequency', DT::dataTableOutput('freq')),
                                  tabPanel('Common Call Network',
                                           conditionalPanel(condition="!output.showNetwork",
+                                                           tags$style(type="text/css",
+                                                                      "div #noShow{text-align:center}"),
                                                            imageOutput('noShow')),
                                           conditionalPanel(condition="output.showNetwork",
                                                            plotOutput('network'))),

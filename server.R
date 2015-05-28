@@ -46,6 +46,8 @@ shinyServer(function(input, output, session) {
     #} else {
      # dat <- read.csv(input$file$datapath, stringsAsFactors=F)
   #  }
+      dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
+      dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
       as.list(dat)
   })
 
@@ -74,10 +76,10 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'fileUploaded', suspendWhenHidden=FALSE)
 
   output$showNetwork <- reactive({
-    if (is.null(input$file)) return(FALSE)
-    n <- rawData()$Target %>% unique() %>% length()
-    return(n > 1)
+    if (is.null(input$file)) return()
+    rawData()$Target %>% unique() %>% length()
   })
+  outputOptions(output, 'showNetwork', suspendWhenHidden=FALSE)
 
   ########################
       #Create Outputs#
@@ -113,7 +115,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$noShow <- renderImage({
-    list(src="404.jpg", alt="This page is useless. Go the the Call Frequency tab.", width=400, height=400)
+    list(src="404.jpg", alt="This page is useless. Go the the Call Frequency tab.", style="height:100%; width:100%")
   }, deleteFile=F)
 
   output$plot <- renderPlot({
