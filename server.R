@@ -31,7 +31,7 @@ shinyServer(function(input, output, session) {
       withProgress(message="Generating data", detail="Page 1", value=0, {
         for (i in 1:length(pageStart)) {
           textBlock <- txt[pageStart[i]:pageFinish[i]]
-          if (input$complianceType == "AT&T - 2015") {
+          if (input$complianceType == "AT&T Text File (2015)") {
             if (input$method == "I created the file myself") {
               dat <- rbind(dat, parseAttTextBlock1(textBlock, i))
             } else {
@@ -89,6 +89,33 @@ shinyServer(function(input, output, session) {
   })
   outputOptions(output, 'showNetwork', suspendWhenHidden=FALSE)
 
+  #########################
+   #Create Plot Functions#
+  #########################
+
+  chartInput <- function() {
+    if (any(input$target == "Select...",
+            input$year == "Select...",
+            input$month == "Select...")) return(NULL)
+    p <- plotGraph(rawDataDF(), input$target, input$month, input$year)
+    print(p)
+  }
+
+  graphInput <- function() {
+    if (is.null(rawData())) return(NULL)
+    g <- graph.data.frame(networkData(), directed=FALSE)
+    l1 <- layout.fruchterman.reingold(g)
+    badVertices <- V(g)[degree(g)<input$degree]
+    g <- delete.vertices(g, badVertices)
+    V(g)$size <- input$nodeSize
+    V(g)$color <- input$nodeColor
+    V(g)$label.cex <- input$labelSize
+    V(g)$label.color <- input$labelColor
+    V(g)$label.dist <- input$offsetValue
+    if (input$showLabel == FALSE) V(g)$label <- NA
+    plot(g, layout=l1)
+  }
+
   ########################
       #Create Outputs#
   ########################
@@ -108,18 +135,7 @@ shinyServer(function(input, output, session) {
   })
 
   output$network <- renderPlot({
-    if (is.null(rawData())) return(NULL)
-    g <- graph.data.frame(networkData(), directed=FALSE)
-    l1 <- layout.fruchterman.reingold(g)
-    badVertices <- V(g)[degree(g)<input$degree]
-    g <- delete.vertices(g, badVertices)
-    V(g)$size <- input$nodeSize
-    V(g)$color <- input$nodeColor
-    V(g)$label.cex <- input$labelSize
-    V(g)$label.color <- input$labelColor
-    V(g)$label.dist <- input$offsetValue
-    if (input$showLabel == FALSE) V(g)$label <- NA
-    plot(g, layout=l1)
+    graphInput()
   })
 
   output$noShow <- renderImage({
@@ -127,11 +143,7 @@ shinyServer(function(input, output, session) {
   }, deleteFile=F)
 
   output$plot <- renderPlot({
-    if (any(input$target == "Select...",
-            input$year == "Select...",
-            input$month == "Select...")) return(NULL)
-    p <- plotGraph(rawDataDF(), input$target, input$month, input$year)
-    print(p)
+    chartInput()
   })
 
   ########################
@@ -164,17 +176,13 @@ shinyServer(function(input, output, session) {
 
   output$common <- renderUI({
     n <- rawData()$Target %>% unique() %>% length()
-    if (n <= 1) return()
+    if (n < 2) return()
     list(
       checkboxInput('common', 'Show only numbers dialed by two targets or more', value=F))
   })
 
   observe({
-    targets <- rawData()$Target %>%
-      unique() %>%
-      sapply(formatNumber) %>%
-      unlist() %>%
-      unname()
+    targets <- rawData()$Target %>% unique() %>% unlist() %>% unname()
     if (!is.null(rawData()$Date)) {
       years <- rawData()$Date %>% as.POSIXlt(format="%m/%d/%y") %>% .$year + 1900
       years %<>% as.numeric() %>% sort()
@@ -185,18 +193,44 @@ shinyServer(function(input, output, session) {
     updateSelectInput(session, 'year', choices=c('Select...', years))
   })
 
+  observe({
+    dates <- rawData()$Date %>% as.Date(format="%m/%d/%y")
+    startDate <- paste0(input$year, "01-01") %>% as.Date()
+    endDate <- paste0(input$year, "12-01") %>% as.Date()
+    dates <- dates[between(dates, startDate, endDate)] %>% unique() %>% sort()
+    months <- format(dates, "%B")
+    updateSelectInput(session, 'month', choices=c('Select...', months))
+  })
+
   ##########################
   #Create Download Handlers#
   ##########################
 
   output$exportData <- downloadHandler(
-    filename = function() {paste0('C:\\Phone Record Data ', Sys.Date(), '.csv')},
+    filename = paste0('C:\\Phone Record Data ', Sys.Date(), '.csv'),
     content = function(file) {write.csv(rawData(), file, row.names=F)}
   )
 
   output$exportFreq <- downloadHandler(
-    filename = function() { paste0('C:\\Call Frequency Report ', Sys.Date(), '.csv') },
+    filename = paste0('C:\\Call Frequency Report ', Sys.Date(), '.csv'),
     content = function(file) {write.csv(freqData(), file, row.names=F)}
   )
+
+  output$exportGraph <- downloadHandler(
+    filename = paste0('C:\\Network Graph ', Sys.Date(), '.png'),
+    content = function(file) {
+      png(file)
+      graphInput()
+      dev.off()
+    })
+
+  output$exportSingle <- downloadHandler(
+    filename = paste0('C:\\', input$target, ' ', input$month, ' ', input$year, '.png'),
+    content = function(file) {
+      png(file)
+      chartInput()
+      dev.off()
+    })
+
 })
 
