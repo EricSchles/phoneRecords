@@ -14,7 +14,7 @@ shinyServer(function(input, output, session) {
     if (is.null(input$file)) return(NULL)
 
     if (!(input$file$type %in% c("text/plain", "text/csv", "text/comma-separated-values", ".csv", ".txt"))) {
-      session$sendCustomMessage(type="showalert", paste(input$file$type, "file type not supported")
+      session$sendCustomMessage(type="showalert", paste(input$file$type, "file type not supported"))
       return(NULL)
     }
 
