@@ -62,7 +62,7 @@ shinyUI(pageWithSidebar(
                      br(),
                      br(),
                      p('To download a graph for each month in each year for the current target, press this button:'),
-                     downloadButton('exportMultiple', 'Export Multiple Graphs')),
+                     actionButton('exportMultiple', 'Export Multiple Graphs', icon("download"))),
 
     conditionalPanel(condition='input.myTabs == "Common Call Network" && output.fileUploaded && !output.showNetwork',
                      h3('Call Network Analysis'),

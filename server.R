@@ -12,10 +12,6 @@ shinyServer(function(input, output, session) {
 
   rawData <- reactive({
     if (is.null(input$file)) return(NULL)
-    #validate(need(input$file$type == "text/plain",
-     #             message=paste("Currently, this app can only take TXT files.",
-      #                          "CSV functionality will be added later.",
-       #                         "Please reload the app and try again.", sep=" ")))
 
     if (!(input$file$type %in% c("text/plain", "text/csv", "text/comma-separated-values", ".csv", ".txt"))) {
       session$sendCustomMessage(type="showalert", "File type not supported")
@@ -216,20 +212,35 @@ shinyServer(function(input, output, session) {
   )
 
   output$exportGraph <- downloadHandler(
-    filename = paste0('C:\\Network Graph ', Sys.Date(), '.png'),
+    filename = paste0('C:\\Network Graph ', Sys.Date(), '.pdf'),
     content = function(file) {
-      png(file)
+      pdf(file, height=8.5, width=11, paper="a4r")
       graphInput()
       dev.off()
     })
 
   output$exportSingle <- downloadHandler(
-    filename = paste0('C:\\', input$target, ' ', input$month, ' ', input$year, '.png'),
+    filename = paste0('C:\\', input$target, ' ', input$month, ' ', input$year, '.pdf'),
     content = function(file) {
-      png(file)
+      pdf(file, height=8.5, width=11, paper="a4r")
       chartInput()
       dev.off()
     })
 
+  output$exportMultiple <- eventReactive(input$exportMultiple, {
+    if (input$exportMultiple == 0) return()
+    target <- input$target
+    dates <- rawData()$Date[rawData()$Target == target]
+    years <- dates %>% as.Date(format="%m/%d/%y") %>% format("%Y") %>% unique()
+    months <- dates %>% as.Date(format="%m/%d/%y") %>% sort %>% format("%B") %>% unique()
+    for (year in years) {
+      for (month in months) {
+        fileName <- paste0('C:\\', target, ' ', month, ' ', year, '.pdf')
+        pdf(fileName, height=8.5, width=11, paper="a4r")
+        chartInput()
+        dev.off()
+      }
+    }
+  })
 })
 
