@@ -101,6 +101,8 @@ shinyUI(pageWithSidebar(
                                           conditionalPanel(condition="!output.showNetwork",
                                                            tags$style(type="text/css",
                                                                       "div #noShow{text-align:center}"),
+                                                           h1("Uh-Oh!", style="text-align:center"),
+                                                           p("Just kidding, things are fine. Read the panel to the left.", style="text-align:center"),
                                                            imageOutput('noShow')),
                                           conditionalPanel(condition="output.showNetwork && !input.commonFlag",
                                                            plotOutput('network')),
