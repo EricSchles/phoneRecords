@@ -251,12 +251,12 @@ formatNumber <- function(number) {
   return(newNumber)
 }
 
-generateNetwork <- function(data, degree) {
+generateNetwork <- function(data) {
   filteredData <- data %>% filter(!is.na(Number_Dialed))
   networkData <- filteredData %>% group_by(Target, Number_Dialed) %>% summarise(Count=n())
   counts <- sapply(networkData$Number_Dialed,
                    function(z) length(networkData$Target[networkData$Number_Dialed == z]))
-  numbersOfInterest <- names(counts[counts >= degree])
+  numbersOfInterest <- names(counts[counts >= 2])
   filteredNetworkData <- networkData %>% filter(Number_Dialed %in% numbersOfInterest)
   if (nrow(filteredNetworkData) == 0) return(NULL) else return(filteredNetworkData)
 }

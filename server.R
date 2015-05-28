@@ -66,10 +66,7 @@ shinyServer(function(input, output, session) {
   })
 
   networkData <- reactive({
-    deg <- input$degree
-    networkData <- generateNetwork(rawDataDF(), input$degree)
-    validate(need(!is.null(networkData), "There are no numbers with that many targets in common."))
-    networkData
+    generateNetwork(rawDataDF())
   })
 
   #########################
@@ -171,6 +168,13 @@ shinyServer(function(input, output, session) {
     )
   })
 
+  output$commonUI <- renderUI({
+    n <- rawData()$Target %>% unique() %>% length()
+    if (n < 2) return()
+    list(
+      checkboxInput('commonFlag', 'View underlying data', value=F))
+  })
+
   output$labelShow <- renderUI({
     if (input$showLabel == FALSE) return()
     list(
@@ -178,16 +182,9 @@ shinyServer(function(input, output, session) {
                   min=1, max=5, value=1.2, step=.1, round=F, ticks=F),
       selectInput('labelColor', 'Label Color:',
                   choices=colors()[colorsIDX], selected="black"),
-      sliderInput('offsetValue', 'Offset:',
+      sliderInput('offsetValue', 'Label Offset:',
                   min=0, max=1, value=0, step=.1, round=F, ticks=F)
     )
-  })
-
-  output$commonUI <- renderUI({
-    n <- rawData()$Target %>% unique() %>% length()
-    if (n < 2) return()
-    list(
-      checkboxInput('commonFlag', 'View underlying data', value=F))
   })
 
   observe({
