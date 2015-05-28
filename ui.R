@@ -40,7 +40,6 @@ shinyUI(pageWithSidebar(
                               John Doe may have received a call (Incoming) from 555-5555 16 times and
                               called (Outgoing) that same number 23 times. You can use the search
                               boxes to look for specific targets or phone numbers.'),
-                     uiOutput('common'),
                      downloadButton('exportFreq', 'Export')),
 
     conditionalPanel(condition='input.myTabs == "Common Call Data" && output.fileUploaded',
@@ -49,6 +48,28 @@ shinyUI(pageWithSidebar(
                               For example, the report may show that John Doe and Jane Smith both
                               called an attorney named Ann Hall 46 and 54 times, respectively. All
                               relationships are based on outgoing calls only.')),
+
+
+    conditionalPanel(condition='input.myTabs == "Common Call Network" && output.fileUploaded && !output.showNetwork',
+                     h3('Call Network Analysis'),
+                     h6(paste("The Common Call output is only worthwhile if you have more than one target.",
+                              "With one target, the graph merely shows everyone the target called, which",
+                              "is better represented in tabular format. You'll want to check the Call Frequency",
+                              "tab to get a better sense of the call patterns.", sep=" "))),
+
+    conditionalPanel(condition='input.myTabs == "Common Call Network" && output.fileUploaded && output.showNetwork',
+                     h3('Call Network Analysis'),
+                     uiOutput('commonUI'),
+                     sliderInput('degree', "Number of targets associated with a given number:",
+                                 min=2, max=5, value=2, step=1, round=T, ticks=F),
+                     sliderInput('nodeSize', 'Node Size:',
+                                 min=1, max=50, value=20, step=1, round=F, ticks=F),
+                     selectInput('nodeColor', 'Node Color:',
+                                 choices=colors()[colorsIDX], selected="lightblue"),
+                     checkboxInput('showLabel', 'Show Labels', value=TRUE),
+                     uiOutput('labelShow'),
+                     uiOutput('offsetShow'),
+                     downloadButton('exportGraph', 'Export Graph')),
 
     conditionalPanel(condition='input.myTabs == "Call Record Graphs" && output.fileUploaded',
                      h3('Call Record Graphs'),
@@ -62,27 +83,8 @@ shinyUI(pageWithSidebar(
                      br(),
                      br(),
                      p('To download a graph for each month in each year for the current target, press this button:'),
-                     actionButton('exportMultiple', 'Export Multiple Graphs', icon("download"))),
+                     actionButton('exportMultiple', 'Export Multiple Graphs', icon("download")))
 
-    conditionalPanel(condition='input.myTabs == "Common Call Network" && output.fileUploaded && !output.showNetwork',
-                     h3('Call Network Analysis'),
-                     h6(paste("The Common Call output is only worthwhile if you have more than one target.",
-                              "With one target, the graph merely shows everyone the target called, which",
-                              "is better represented in tabular format. You'll want to check the Call Frequency",
-                              "tab to get a better sense of the call patterns.", sep=" "))),
-
-    conditionalPanel(condition='input.myTabs == "Common Call Network" && output.fileUploaded && output.showNetwork',
-                     h3('Call Network Analysis'),
-                     sliderInput('degree', "Number of targets associated with a given number:",
-                                 min=2, max=5, value=2, step=1, round=T, ticks=F),
-                     sliderInput('nodeSize', 'Node Size:',
-                                 min=1, max=50, value=20, step=1, round=F, ticks=F),
-                     selectInput('nodeColor', 'Node Color:',
-                                 choices=colors()[colorsIDX], selected="lightblue"),
-                     checkboxInput('showLabel', 'Show Labels', value=TRUE),
-                     uiOutput('labelShow'),
-                     uiOutput('offsetShow'),
-                     downloadButton('exportGraph', 'Export Graph'))
   ),
 
   mainPanel(
@@ -100,8 +102,10 @@ shinyUI(pageWithSidebar(
                                                            tags$style(type="text/css",
                                                                       "div #noShow{text-align:center}"),
                                                            imageOutput('noShow')),
-                                          conditionalPanel(condition="output.showNetwork",
-                                                           plotOutput('network'))),
+                                          conditionalPanel(condition="output.showNetwork && !input.commonFlag",
+                                                           plotOutput('network')),
+                                          conditionalPanel(condition="output.showNetwork && input.commonFlag",
+                                                           dataTableOutput('common'))),
                                  tabPanel('Call Record Graphs', plotOutput('plot'))))
   )
 ))

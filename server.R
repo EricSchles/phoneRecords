@@ -80,8 +80,9 @@ shinyServer(function(input, output, session) {
   outputOptions(output, 'fileUploaded', suspendWhenHidden=FALSE)
 
   output$showNetwork <- reactive({
-    if (is.null(input$file)) return()
-    rawData()$Target %>% unique() %>% length()
+    if (is.null(rawData())) return()
+    n <- rawData()$Target %>% unique() %>% length()
+    return(n > 1)
   })
   outputOptions(output, 'showNetwork', suspendWhenHidden=FALSE)
 
@@ -130,6 +131,18 @@ shinyServer(function(input, output, session) {
     freqData() %>% datatable()
   })
 
+  output$common <- renderDataTable({
+    if (is.null(rawData())) return(NULL)
+    dat <- rawDataDF() %>% group_by(Number_Dialed) %>%
+      mutate(Count=length(unique(Target)), Targets=paste(unique(Target), collapse=' '), Number_of_Calls=n()) %>%
+      filter(Count > 1 & nchar(Number_Dialed) > 4) %>%
+      arrange(Number_Dialed) %>%
+      slice(1) %>%
+      select(Number_Dialed, Targets, Number_of_Calls) %>%
+      datatable(rownames=FALSE)
+    dat
+  })
+
   output$network <- renderPlot({
     graphInput()
   })
@@ -170,11 +183,11 @@ shinyServer(function(input, output, session) {
     )
   })
 
-  output$common <- renderUI({
+  output$commonUI <- renderUI({
     n <- rawData()$Target %>% unique() %>% length()
     if (n < 2) return()
     list(
-      checkboxInput('common', 'Show only numbers dialed by two targets or more', value=F))
+      checkboxInput('commonFlag', 'View underlying data', value=F))
   })
 
   observe({

@@ -14,10 +14,10 @@ aggTable <- function(data) {
   x1 <- data %>% filter(Direction == 'Outgoing') %>%
     group_by(Target, Number_Dialed) %>%
     summarise(Outgoing = n())
-  names(x1) <- c('Target', 'Number', 'Outgoing')
+  names(x1) <- c('Target', 'Number_Dialed', 'Outgoing')
   x2 <- data %>% filter(Direction == 'Incoming') %>% group_by(Target, Number_Dialed) %>%
               summarise(Incoming = n())
-  names(x2) <- c('Target', 'Number', 'Incoming')
+  names(x2) <- c('Target', 'Number_Dialed', 'Incoming')
   x3 <- full_join(x1, x2)
   return(x3)
 }
