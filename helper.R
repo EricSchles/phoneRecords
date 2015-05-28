@@ -11,15 +11,20 @@ library(scales)
 library(igraph)
 
 aggTable <- function(data) {
-  x1 <- data %>% filter(Direction == 'Outgoing') %>%
-    group_by(Target, Number_Dialed) %>%
-    summarise(Outgoing = n())
-  names(x1) <- c('Target', 'Number_Dialed', 'Outgoing')
-  x2 <- data %>% filter(Direction == 'Incoming') %>% group_by(Target, Number_Dialed) %>%
-              summarise(Incoming = n())
-  names(x2) <- c('Target', 'Number_Dialed', 'Incoming')
-  x3 <- full_join(x1, x2)
-  return(x3)
+  if ("Direction" %in% names(data)) {
+    x1 <- data %>% filter(Direction == 'Outgoing') %>%
+      group_by(Target, Number_Dialed) %>%
+      summarise(Outgoing = n())
+    names(x1) <- c('Target', 'Number_Dialed', 'Outgoing')
+    x2 <- data %>% filter(Direction == 'Incoming') %>% group_by(Target, Number_Dialed) %>%
+                summarise(Incoming = n())
+    names(x2) <- c('Target', 'Number_Dialed', 'Incoming')
+    dat <- full_join(x1, x2)
+  } else {
+    dat <- data %>% group_by(Target, Number_Dialed) %>%
+      summarise(Number_Of_Calls = n())
+  }
+  return(dat)
 }
 
 parseAttTextBlock1 <- function(textBlock, pageNumber) {
@@ -201,8 +206,9 @@ prepCSV <- function(data) {
     if (!("number_dialed" %in% vars)){
       numberDialed <- ifelse(originating == target, terminating, originating)
     }
-
-
+  }
+  }
+}
 
 plotGraph <- function(data, target, month, year) {
   monNames <- c('January', 'February', 'March', 'April', 'May', 'June',
@@ -212,6 +218,7 @@ plotGraph <- function(data, target, month, year) {
 
   idx <- which(monNames == month)
 
+  if (!("Direction" %in% names(data))) data$Direction <- "Total"
   data$Date %<>% as.Date(format="%m/%d/%y")
   startDate <- paste0(year, '-', monDigits[idx], '-01') %>% as.Date()
   endDate <- paste0(year, '-', monDigits[idx], '-', endDays[idx]) %>% as.Date()
