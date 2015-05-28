@@ -102,6 +102,8 @@ shinyServer(function(input, output, session) {
     if (is.null(rawData())) return(NULL)
     g <- graph.data.frame(networkData(), directed=FALSE)
     l1 <- layout.fruchterman.reingold(g)
+    session$sendCustomMessage(type="showalert", message=V(g)$names)
+    session$sendCustomMessage(type="showalert", message=V(g)$Target %>% head())
     V(g)$size <- input$nodeSize
     V(g)$color <- ifelse(V(g)$name %in% V(g)$Target, input$targetColor, input$otherColor)
     V(g)$label.cex <- input$labelSize
@@ -121,12 +123,12 @@ shinyServer(function(input, output, session) {
 
   output$raw <- DT::renderDataTable({
     if (is.null(rawData())) return(NULL)
-    rawDataDF() %>% datatable()
+    rawDataDF() %>% datatable(rownames=FALSE)
   })
 
   output$freq <- DT::renderDataTable({
     if (is.null(rawData())) return(NULL)
-    freqData() %>% datatable()
+    freqData() %>% datatable(rownames=FALSE)
   })
 
   output$common <- renderDataTable({
