@@ -102,7 +102,7 @@ shinyServer(function(input, output, session) {
     g <- graph.data.frame(networkData(), directed=FALSE)
     l1 <- layout.fruchterman.reingold(g)
     V(g)$size <- input$nodeSize
-    V(g)$color <- input$nodeColor
+    V(g)$color <- ifelse(V(g)$name %in% V(g)$Target, input$targetColor, input$otherColor)
     V(g)$label.cex <- input$labelSize
     V(g)$label.color <- input$labelColor
     V(g)$label.dist <- input$offsetValue
