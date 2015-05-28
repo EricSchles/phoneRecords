@@ -13,7 +13,10 @@ shinyUI(pageWithSidebar(
                         or a CSV file that has already been parsed and cleaned up."),
                     h6("If you have any issues with this tool, please contact Bryan at brittenb@dany.nyc.gov or 212-335-4309"),
                     selectInput('complianceType', 'What type of file are you uploading?',
-                                choices=c("Select...", "AT&T - 2015", "AT&T/Cingular - 2015")),
+                                choices=c("Select...", "AT&T - 2015", "Raw CSV File")),
+                    selectInput("method", "How was the file created?",
+                                choices=c("Select...", "I created the file myself", "It was sent to me as compliance"),
+                                selected="Select..."),
                     uiOutput('fileShow'),
                     tags$hr()),
 

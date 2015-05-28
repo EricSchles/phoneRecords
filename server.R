@@ -17,12 +17,12 @@ shinyServer(function(input, output, session) {
       #                          "CSV functionality will be added later.",
        #                         "Please reload the app and try again.", sep=" ")))
 
-    if (input$file$type != "text/plain") {
+    if (!(input$file$type %in% c("text/plain", "text/csv", "text/comma-separated-values", ".csv", ".txt"))) {
       session$sendCustomMessage(type="showalert", "File type not supported")
       return(NULL)
     }
 
-    #if (input$file$type) == 'text/plain') {
+    if (input$file$type %in% c('text/plain', '.txt')) {
       txt <- readLines(con=input$file$datapath) %>% gsub('^\\s*|\\s*$', '', .)
       pageStart <- grep("Run Date: ", txt, fixed=T)
       pageFinish <- c(pageStart[-1] - 1, length(txt))
@@ -32,20 +32,28 @@ shinyServer(function(input, output, session) {
         for (i in 1:length(pageStart)) {
           textBlock <- txt[pageStart[i]:pageFinish[i]]
           if (input$complianceType == "AT&T - 2015") {
-            dat <- rbind(dat, parseAttTextBlock1(textBlock, i))
-          } else if (input$complianceType == "AT&T/Cingular - 2015") {
-            dat <- rbind(dat, parseAttTextBlock2(textBlock))
-          } else {
-            dat <- data.frame("Error"="The data could not be parsed",
-                              "Solution"="Email Bryan at brittenb@dany.nyc.gov or call at 212-335-4309",
-                              stringsAsFactors=F)
+            if (input$method == "I created the file myself") {
+              dat <- rbind(dat, parseAttTextBlock1(textBlock, i))
+            } else {
+              dat <- rbind(dat, parseAttTextBlock2(textBlock))
+            }
           }
           incProgress(1/length(pageStart), detail=paste("Page", i))
         }
       })
-    #} else {
-     # dat <- read.csv(input$file$datapath, stringsAsFactors=F)
-  #  }
+    } else {
+      dat <- read.csv(input$file$datapath, stringsAsFactors=F)
+      if (!(all(c("Target", "Date", "Originating", "Terminating") %in% names(dat)))) {
+        session$sendCustomMessage(type="showalert", paste("The CSV file is not formatted properly.",
+                                                          "At the very least you must have the",
+                                                          "Target, Date, Originating, and Terminating",
+                                                          "names in your spreadsheet. Please review",
+                                                          "the documentation for further information.",
+                                                          sep=" "))
+        return(NULL)
+      }
+      dat <- prepCSV(dat)
+    }
       dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
       dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
       as.list(dat)
@@ -131,7 +139,8 @@ shinyServer(function(input, output, session) {
   ########################
 
   output$fileShow <- renderUI({
-    if (input$complianceType == "Select...") return()
+    if (any(input$complianceType == "Select...",
+            input$method == "Select...")) return()
     list(
       fileInput('file', 'Choose a file', multiple=F,
                 accept=c('text/csv', 'text/comma-separated-values',
