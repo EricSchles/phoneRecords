@@ -248,7 +248,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     }
 
-    dir.create(path.expand('~/Documents/shinyTemp/'), showWarnings=F)
+    #dir.create(path.expand('~/Documents/shinyTemp/'), showWarnings=F)
     target <- input$target
     dates <- rawData()$Date[rawData()$Target == target]
     years <- dates %>% as.Date(format="%m/%d/%y") %>% format("%Y") %>% unique()
@@ -258,7 +258,8 @@ shinyServer(function(input, output, session) {
           as.Date(format="%m/%d/%y") %>% sort %>% format("%B") %>% unique()
         withProgress(message="", detail=NULL, value=0, {
           for (month in months) {
-            fileName <- paste0(path.expand('~/Documents/shinyTemp/'), target, ' ', month, ' ', year, '.pdf')
+            #fileName <- paste0(path.expand('~/Documents/shinyTemp/'), target, ' ', month, ' ', year, '.pdf')
+            fileName <- paste0(target, ' ', month, ' ', year, '.pdf')
             pdf(fileName, height=8.5, width=11, paper="a4r")
             chartInput()
             dev.off()
@@ -268,11 +269,12 @@ shinyServer(function(input, output, session) {
         incProgress(amount=1/length(years), detail=year)
       }
     })
-    zip(path.expand('~/Documents/Phone Call Plots.zip'), dir(path.expand('~/Documents/shinyTemp/')))
-    unlink('~/Documents/shinyTemp/', recursive=T)
-    session$sendCustomMessage(type="showalert", paste("The files have been saved here:",
-                                                      path.expand('~/Documents/Phone Call Plots.zip'),
-                                                      sep=' '))
+    #zip(path.expand('~/Documents/Phone Call Plots.zip'), dir(path.expand('~/Documents/shinyTemp/')))
+    zip('Phone Call Plots.zip', dir())
+    #unlink('~/Documents/shinyTemp/', recursive=T)
+    #session$sendCustomMessage(type="showalert", paste("The files have been saved here:",
+     #                                                 path.expand('~/Documents/Phone Call Plots.zip'),
+      #                                                sep=' '))
   })
 })
 
