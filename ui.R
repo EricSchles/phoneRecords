@@ -17,9 +17,7 @@ shinyUI(pageWithSidebar(
                     selectInput('complianceType', 'What type of file are you uploading?',
                                 choices=c("Select...", "AT&T Text File (2015)",
                                           "Formatted CSV File", "Raw CSV File", "I'd like to see an example")),
-                    selectInput("method", "How was the file created?",
-                                choices=c("Select...", "I created the file myself", "It was sent to me as compliance"),
-                                selected="Select..."),
+                    uiOutput('methodShow'),
                     uiOutput('fileShow'),
                     tags$hr()),
 

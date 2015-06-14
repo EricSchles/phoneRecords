@@ -271,15 +271,17 @@ formatNumber <- function(number) {
 
 generateNetwork <- function(data) {
   filteredData <- data %>% filter(!is.na(Number_Dialed))
-  networkData <- filteredData %>% group_by(Target, Number_Dialed) %>% summarise(Count=n())
-  counts <- sapply(networkData$Number_Dialed,
-                   function(z) length(networkData$Target[networkData$Number_Dialed == z]))
-  numbersOfInterest <- names(counts[counts >= 2])
-  filteredNetworkData <- networkData %>% filter(Number_Dialed %in% numbersOfInterest)
+  networkData <- filteredData %>% group_by(Target, Number_Dialed) %>%
+    summarise(Count=n()) %>% arrange(Number_Dialed)
+  networkData <- networkData %>% group_by(Number_Dialed) %>% summarise(Count=n())
+  numbersOfInterest <- networkData %>% filter(Count >= 2) %>% select(Number_Dialed) %>%
+    unlist() %>% unname()
+  filteredNetworkData <- filteredData %>% filter(Number_Dialed %in% numbersOfInterest) %>%
+    group_by(Target, Number_Dialed) %>% select(Target, Number_Dialed)
   if (nrow(filteredNetworkData) == 0) return(NULL) else return(filteredNetworkData)
 }
 
-generateRandomDate <- function(n=10000) {
+generateRandomDate <- function(n=500) {
 st <- "2010/01/02" %>% as.Date() %>% as.POSIXct()
 et <- "2015/05/31" %>% as.Date() %>% as.POSIXct()
 dt <- as.numeric(difftime(et,st,unit="sec"))
@@ -288,16 +290,23 @@ rt <- st + ev
 return(as.Date(rt))
 }
 
+generateRandomPhoneNumber <- function(n=500) {
+  prefix <- "(123) 555-"
+  suffix <- sample(1:9999, n, replace=T) %>% str_pad(., 4, pad="0")
+  number <- paste(prefix, suffix, sep='')
+  return(number)
+}
+
 generateExampleData <- function() {
-  Target <- c(rep('(123) 555-0123', 2500), rep('(123) 555-1580', 2500),
-              rep('(123) 555-8142', 2500), rep('(123) 555-9329', 2500))
-  Number_Dialed <- paste("(123) 555-", sample(0001:9999, 10000, replace=T), sep='')
+  Target <- c(rep('(123) 555-0123', 125), rep('(123) 555-1580', 125),
+              rep('(123) 555-8142', 125), rep('(123) 555-9329', 125))
+  Number_Dialed <- generateRandomPhoneNumber()
   Number_Dialed <- ifelse(Number_Dialed %in% Target, "(123) 555-6565", Number_Dialed)
   Date <- generateRandomDate()
-  Direction <- sample(c('Outgoing', 'Incoming'), 10000, replace=T)
-  Duration <- paste("0", sample(0:9, 10000, replace=T), ":", sample(10:59, 10000, replace=T), sep='')
+  Direction <- sample(c('Outgoing', 'Incoming'), 500, replace=T)
+  Duration <- paste("0", sample(0:9, 500, replace=T), ":", sample(10:59, 500, replace=T), sep='')
   exampleData <- data.frame("Target"=Target, "Number_Dialed"=Number_Dialed,
-                            "Date"=Date, "Direction"=Direction, "Duration"=Duration)
+                            "Date"=Date, "Direction"=Direction, "Duration"=Duration, stringsAsFactors=F)
   return(exampleData)
 }
 

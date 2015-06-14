@@ -11,64 +11,67 @@ shinyServer(function(input, output, session) {
   ########################
 
   rawData <- reactive({
-    if (is.null(input$file)) return(NULL)
+    if (is.null(input$file) && input$complianceType == "Select...") return(NULL)
 
-    if (!(input$file$type %in% c("text/plain", "text/csv", "text/comma-separated-values",
-                                 ".csv", ".txt", "application/vnd.ms-excel"))) {
-      session$sendCustomMessage(type="showalert", paste(input$file$type, "file type not supported"))
-      return(NULL)
-    }
-
-    if (input$file$type %in% c('text/plain', '.txt')) {
-      txt <- readLines(con=input$file$datapath) %>% gsub('^\\s*|\\s*$', '', .)
-      pageStart <- grep("Run Date: ", txt, fixed=T)
-      pageFinish <- c(pageStart[-1] - 1, length(txt))
-      dat <- NULL
-
-      withProgress(message="Generating data", detail="Page 1", value=0, {
-        for (i in 1:length(pageStart)) {
-          textBlock <- txt[pageStart[i]:pageFinish[i]]
-          if (input$complianceType == "AT&T Text File (2015)") {
-            if (input$method == "I created the file myself") {
-              dat <- rbind(dat, parseAttTextBlock1(textBlock, i))
-            } else {
-              dat <- rbind(dat, parseAttTextBlock2(textBlock))
-            }
-          }
-          incProgress(1/length(pageStart), detail=paste("Page", i))
-        }
-      })
-      dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
-      dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
-    } else if (input$complianceType == "Raw CSV File") {
-      dat <- read.csv(input$file$datapath, stringsAsFactors=F)
-      dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
-      dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
-    } else if (input$complianceType == "I'd like to see an example") {
-      dat <- generateExampleData()
-    } else {
-      dat <- read.csv(input$file$datapath, stringsAsFactors=F)
-      if (!(all(c("target", "date", "number_dialed") %in% tolower(names(dat))))) {
-        session$sendCustomMessage(type="showalert", paste("The CSV file is not formatted properly.",
-                                                          "At the very least you must have",
-                                                          "Target, Number_Dialed, and Date",
-                                                          "variables in your spreadsheet. Please review",
-                                                          "the documentation for further information.",
-                                                          sep=" "))
+    if (!is.null(input$file)) {
+      if (!(input$file$type %in% c("text/plain", "text/csv", "text/comma-separated-values",
+                                   ".csv", ".txt", "application/vnd.ms-excel"))) {
+        session$sendCustomMessage(type="showalert", paste(input$file$type, "file type not supported"))
         return(NULL)
       }
+
+      if (input$file$type %in% c('text/plain', '.txt')) {
+        txt <- readLines(con=input$file$datapath) %>% gsub('^\\s*|\\s*$', '', .)
+        pageStart <- grep("Run Date: ", txt, fixed=T)
+        pageFinish <- c(pageStart[-1] - 1, length(txt))
+        dat <- NULL
+
+        withProgress(message="Generating data", detail="Page 1", value=0, {
+          for (i in 1:length(pageStart)) {
+            textBlock <- txt[pageStart[i]:pageFinish[i]]
+            if (input$complianceType == "AT&T Text File (2015)") {
+              if (input$method == "I created the file myself") {
+                dat <- rbind(dat, parseAttTextBlock1(textBlock, i))
+              } else {
+                dat <- rbind(dat, parseAttTextBlock2(textBlock))
+              }
+            }
+            incProgress(1/length(pageStart), detail=paste("Page", i))
+          }
+        })
+        dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
+        dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
+      } else if (input$complianceType == "Raw CSV File") {
+        dat <- read.csv(input$file$datapath, stringsAsFactors=F)
+        dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
+        dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
+      } else {
+        dat <- read.csv(input$file$datapath, stringsAsFactors=F)
+        if (!(all(c("target", "date", "number_dialed") %in% tolower(names(dat))))) {
+          session$sendCustomMessage(type="showalert", paste("The CSV file is not formatted properly.",
+                                                            "At the very least you must have",
+                                                            "Target, Number_Dialed, and Date",
+                                                            "variables in your spreadsheet. Please review",
+                                                            "the documentation for further information.",
+                                                            sep=" "))
+          return(NULL)
+        }
       #dat <- prepCSV(dat)
+      }
     }
-      as.list(dat)
+    if (input$complianceType == "I'd like to see an example") {
+      dat <- generateExampleData()
+    }
+    as.list(dat)
   })
 
   rawDataDF <- reactive({
-    if (is.null(input$file)) return(NULL)
+    if (is.null(rawData())) return(NULL)
     as.data.frame(rawData(), stringsAsFactors=F)
   })
 
   freqData <- reactive({
-    if (is.null(input$file)) return(NULL)
+    if (is.null(rawData())) return(NULL)
     rawDataDF() %>% aggTable()
   })
 
@@ -81,7 +84,7 @@ shinyServer(function(input, output, session) {
   #########################
 
   output$fileUploaded <- reactive({
-    return(!is.null(rawData()))
+    return(!is.null(rawData()) || input$complianceType == "I'd like to see an example")
   })
   outputOptions(output, 'fileUploaded', suspendWhenHidden=FALSE)
 
@@ -105,7 +108,7 @@ shinyServer(function(input, output, session) {
   }
 
   graphInput <- function() {
-    if (is.null(rawData())) return(NULL)
+    if (is.null(networkData())) return(NULL)
     g <- graph.data.frame(networkData(), directed=FALSE)
     l1 <- layout.fruchterman.reingold(g, niter=1000, area=vcount(g)^2.3, repuserad=vcount(g)^2.8)
     V(g)$size <- input$nodeSize
@@ -162,6 +165,15 @@ shinyServer(function(input, output, session) {
   ########################
     #Create Dynamic UIs#
   ########################
+
+  output$methodShow <- renderUI({
+    if (input$complianceType == "Select...") return()
+    list(
+      selectInput("method", "How was the file created?",
+                                choices=c("Select...", "I created the file myself", "It was sent to me as compliance"),
+                                selected="Select...")
+    )
+  })
 
   output$fileShow <- renderUI({
     if (any(input$complianceType == "Select...",
