@@ -221,8 +221,19 @@ shinyServer(function(input, output, session) {
   observe({
     if (is.null(rawData())) return()
     dates <- rawData()$Date
-    dates <- dates[paste0("20", substr(dates, 7, 8)) == input$year]
-    months <- dates %>% unique() %>% as.Date(format="%m/%d/%y") %>% sort() %>% format("%B")
+    if (class(dates)[1] %in% c("Date", "POSIXct")) {
+      dates <- dates[format(dates, "%Y") == input$year]
+    } else {
+      dates <- try(as.Date(dates))
+      if (class(dates) == "try-error") {
+        session$sendCustomMessage(type="showalert", paste("Dates are not formatted properly.",
+                                                          "Try formating them like yyyy/mm/dd",
+                                                          "and load the data again."))
+      } else {
+        dates <- dates[format(dates, "%Y") == input$year]
+      }
+    }
+    months <- dates %>% unique() %>% sort() %>% format("%B")
     updateSelectInput(session, 'month', choices=c('Select...', months))
   })
 
