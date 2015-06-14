@@ -44,12 +44,14 @@ shinyServer(function(input, output, session) {
       dat <- read.csv(input$file$datapath, stringsAsFactors=F)
       dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
       dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
+    } else if (input$complianceType == "I'd like to see an example") {
+      dat <- generateExampleData()
     } else {
       dat <- read.csv(input$file$datapath, stringsAsFactors=F)
       if (!(all(c("target", "date", "number_dialed") %in% tolower(names(dat))))) {
         session$sendCustomMessage(type="showalert", paste("The CSV file is not formatted properly.",
                                                           "At the very least you must have",
-                                                          "Target, Date, and Number_Dialed",
+                                                          "Target, Number_Dialed, and Date",
                                                           "variables in your spreadsheet. Please review",
                                                           "the documentation for further information.",
                                                           sep=" "))

@@ -279,5 +279,27 @@ generateNetwork <- function(data) {
   if (nrow(filteredNetworkData) == 0) return(NULL) else return(filteredNetworkData)
 }
 
+generateRandomDate <- function(n=10000) {
+st <- "2010/01/02" %>% as.Date() %>% as.POSIXct()
+et <- "2015/05/31" %>% as.Date() %>% as.POSIXct()
+dt <- as.numeric(difftime(et,st,unit="sec"))
+ev <- sort(runif(n, 0, dt))
+rt <- st + ev
+return(as.Date(rt))
+}
+
+generateExampleData <- function() {
+  Target <- c(rep('(123) 555-0123', 2500), rep('(123) 555-1580', 2500),
+              rep('(123) 555-8142', 2500), rep('(123) 555-9329', 2500))
+  Number_Dialed <- paste("(123) 555-", sample(0001:9999, 10000, replace=T), sep='')
+  Number_Dialed <- ifelse(Number_Dialed %in% Target, "(123) 555-6565", Number_Dialed)
+  Date <- generateRandomDate()
+  Direction <- sample(c('Outgoing', 'Incoming'), 10000, replace=T)
+  Duration <- paste("0", sample(0:9, 10000, replace=T), ":", sample(10:59, 10000, replace=T), sep='')
+  exampleData <- data.frame("Target"=Target, "Number_Dialed"=Number_Dialed,
+                            "Date"=Date, "Direction"=Direction, "Duration"=Duration)
+  return(exampleData)
+}
+
 
 
