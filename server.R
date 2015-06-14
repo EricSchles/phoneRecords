@@ -38,7 +38,12 @@ shinyServer(function(input, output, session) {
           incProgress(1/length(pageStart), detail=paste("Page", i))
         }
       })
-      dat <- dat[, -2]
+      dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
+      dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
+    } else if (input$complianceType == "Raw CSV File") {
+      dat <- read.csv(input$file$datapath, stringsAsFactors=F)
+      dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
+      dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
     } else {
       dat <- read.csv(input$file$datapath, stringsAsFactors=F)
       if (!(all(c("target", "date", "number_dialed") %in% tolower(names(dat))))) {
@@ -52,9 +57,6 @@ shinyServer(function(input, output, session) {
       }
       #dat <- prepCSV(dat)
     }
-      dat$Target <- dat$Target %>% sapply(formatNumber) %>% unlist() %>% unname()
-      dat$Number_Dialed <- dat$Number_Dialed %>% sapply(formatNumber) %>% unlist() %>% unname()
-      #removing Item_Number" from the dataframe for readability and usage reasons
       as.list(dat)
   })
 
@@ -118,7 +120,7 @@ shinyServer(function(input, output, session) {
   ########################
 
   output$logo <- renderImage({
-    list(src="new_dany_seal.png", alt="DANY Logo", width=400, height=400)
+    list(src="getting-started.jpg", alt="Get Started Logo", width=400, height=400)
   }, deleteFile=F)
 
   output$raw <- DT::renderDataTable({
@@ -246,7 +248,6 @@ shinyServer(function(input, output, session) {
     content = function(file) {
       if (input$target == 'Select...') {
         session$sendCustomMessage(type="showalert", "Need to choose a target first.")
-        dev.off()
         return(NULL)
       }
       setwd(tempdir())
@@ -266,6 +267,7 @@ shinyServer(function(input, output, session) {
           }
       }
       zip(zipfile="pdfs.zip", files=fileNames)
+      browser()
     },
     contentType = "application/zip"
   )

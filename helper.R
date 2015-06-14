@@ -103,7 +103,7 @@ parseAttTextBlock1 <- function(textBlock, pageNumber) {
       flagNumbers <- c(flagNumbers, flagNumber)
     }
   }
-  dataRows <- data.frame("Target"=target, "Item_Number"=itemNumbers, "Date"=dates, "Time"=times,
+  dataRows <- data.frame("Target"=target, "Item"=itemNumbers, "Date"=dates, "Time"=times,
                    "Duration"=durations, "Direction"=directions,
                    "Number_Dialed"=numbersDialed, "Flag"=flags, "Flagged_Number"=flagNumbers,
                    stringsAsFactors=F)
@@ -188,7 +188,7 @@ parseAttTextBlock2 <- function(textBlock) {
       flagNumbers <- c(flagNumbers, flagNumber)
     }
   }
-  dataRows <- data.frame("Target"=target, "Item_Number"=itemNumbers, "Date"=dates, "Time"=times,
+  dataRows <- data.frame("Target"=target, "Item"=itemNumbers, "Date"=dates, "Time"=times,
                          "Duration"=durations, "Direction"=directions,
                          "Number_Dialed"=numbersDialed, "Flag"=flags, "Flagged_Number"=flagNumbers,
                          stringsAsFactors=F)
